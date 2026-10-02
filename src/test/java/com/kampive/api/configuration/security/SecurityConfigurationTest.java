@@ -31,7 +31,9 @@ class SecurityConfigurationTest {
 
     @Test
     void anonymousRequestsHaveSanitizedJsonErrors() throws Exception {
-        for (String path : new String[]{"/api/campsites", "/actuator/env", "/login"}) {
+        for (String path : new String[]{"/api/campsites", "/actuator/env", "/login",
+                "/v3/api-docs", "/v3/api-docs.yaml", "/v3/api-docs/swagger-config",
+                "/swagger-ui.html", "/swagger-ui/index.html"}) {
             mvc.perform(get(path))
                 .andExpect(status().isUnauthorized())
                 .andExpect(content().contentTypeCompatibleWith("application/problem+json"))

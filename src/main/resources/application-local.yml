@@ -2,3 +2,6 @@
 logging:
   level:
     root: INFO
+app:
+  documentation:
+    enabled: true

@@ -5,7 +5,7 @@ Controles iniciais, sem declaração de conformidade completa ou auditoria.
 
 | Área | Base atual | Próximas funcionalidades |
 | --- | --- | --- |
-| A01 Controle de acesso | Negação por padrão, somente health GET público | Autorização por recurso e testes entre usuários |
+| A01 Controle de acesso | Negação por padrão, health GET público; documentação GET pública somente quando habilitada (perfil local) | Autorização por recurso e testes entre usuários |
 | A02 Configuração | Sem usuário padrão/Basic/formulário; CSRF ativo; sem CORS permissivo; multipart desativado | Allowlist CORS e política CSRF conforme autenticação |
 | A03 Cadeia de suprimentos | Wrapper oficial, versões e imagens por digest, testes no build | Scanner de dependências/imagens e revisão de CVEs |
 | A04 Criptografia | Credenciais fora do Git, role restrita | HTTPS, secret manager, hash de senhas e armazenamento móvel seguro |

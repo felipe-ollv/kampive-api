@@ -39,3 +39,15 @@ management:
     health:
       show-details: never
       show-components: never
+
+app:
+  documentation:
+    enabled: false
+springdoc:
+  api-docs:
+    enabled: ${app.documentation.enabled}
+  swagger-ui:
+    enabled: ${app.documentation.enabled}
+    disable-swagger-default-url: true
+    validator-url: ""
+  show-actuator: false
