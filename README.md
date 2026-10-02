@@ -10,7 +10,7 @@ o `.env`, iniciar PostgreSQL e provisionar manualmente a role restrita. Na infra
 
 ```sh
 docker compose up -d --build
-curl --fail http://localhost:8080/actuator/health
+curl --cacert certs/kampive-local-root.crt --fail https://localhost:8443/actuator/health
 docker compose logs -f api
 ```
 
@@ -56,9 +56,9 @@ sem DDL. Não há JWT, uploads, push ou dados de exemplo nesta entrega.
 
 No Docker Compose (perfil `local`):
 
-- Interface: http://localhost:8080/swagger-ui.html
-- OpenAPI JSON: http://localhost:8080/v3/api-docs
-- OpenAPI YAML: http://localhost:8080/v3/api-docs.yaml
+- Interface: https://localhost:8443/swagger-ui.html
+- OpenAPI JSON: https://localhost:8443/v3/api-docs
+- OpenAPI YAML: https://localhost:8443/v3/api-docs.yaml
 
 Integração com [springdoc-openapi 3.1.1](https://springdoc.org/), compatível com Spring Boot 4.
 A documentação fica desabilitada por padrão e é habilitada no perfil local por
@@ -73,3 +73,5 @@ a especificação a um validador externo. Reconstrua a imagem após alterações
 Veja [fluxo de autenticação, contratos e testes](docs/authentication.md).
 
 Veja [contratos e filtros do catálogo geográfico](docs/geography.md).
+
+O Compose usa HTTPS via Caddy. Siga o README da infra para exportar a CA pública e confiar nela no simulador.
