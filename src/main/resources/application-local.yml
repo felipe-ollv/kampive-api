@@ -1,0 +1,4 @@
+# Activated by Docker Compose. Connection settings come from environment variables.
+logging:
+  level:
+    root: INFO

@@ -1,0 +1,10 @@
+# HTTP/architecture tests intentionally run without a database.
+spring:
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration
+      - org.springframework.boot.hibernate.autoconfigure.HibernateJpaAutoConfiguration
+  datasource:
+    url: jdbc:postgresql://unused/kampive
+    username: unused
+    password: unused
