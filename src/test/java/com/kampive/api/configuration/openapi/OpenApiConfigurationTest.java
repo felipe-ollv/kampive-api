@@ -13,6 +13,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 class OpenApiConfigurationTest {
+    @org.springframework.test.context.bean.override.mockito.MockitoBean
+    org.springframework.jdbc.core.simple.JdbcClient jdbc;
+    @org.springframework.test.context.bean.override.mockito.MockitoBean
+    org.springframework.transaction.PlatformTransactionManager transactions;
     @Autowired MockMvc mvc;
 
     @Test

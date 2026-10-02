@@ -5,3 +5,9 @@ logging:
 app:
   documentation:
     enabled: true
+# Local Docker uses HTTP on loopback. All other environments require HTTPS.
+server:
+  servlet:
+    session:
+      cookie:
+        secure: false

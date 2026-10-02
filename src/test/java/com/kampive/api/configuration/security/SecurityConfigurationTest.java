@@ -17,11 +17,15 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 class SecurityConfigurationTest {
+    @org.springframework.test.context.bean.override.mockito.MockitoBean
+    org.springframework.jdbc.core.simple.JdbcClient jdbc;
+    @org.springframework.test.context.bean.override.mockito.MockitoBean
+    org.springframework.transaction.PlatformTransactionManager transactions;
     @Autowired MockMvc mvc;
     @Autowired ApplicationContext context;
 
     @Test
-    void healthIsTheOnlyPublicEndpointAndRevealsNoDetails() throws Exception {
+    void healthIsPublicAndRevealsNoDetails() throws Exception {
         mvc.perform(get("/actuator/health"))
             .andExpect(status().isOk())
             .andExpect(content().json("{\"status\":\"UP\"}"))
