@@ -33,7 +33,7 @@ public class IdentityController {
     public record RegisterRequest(
         @NotBlank @Size(min=3,max=150) String name,
         @NotBlank @Email @Size(max=254) String email,
-        @NotNull @Size(min=15,max=128) @Schema(accessMode=Schema.AccessMode.WRITE_ONLY) String password,
+        @NotNull @Size(min=8,max=128) @Pattern(regexp="(?s)(?=.*[A-Z])(?=.*[0-9]).*") @Schema(accessMode=Schema.AccessMode.WRITE_ONLY) String password,
         UUID countryUuid, UUID adventurerStyleUuid,
         @NotNull @Size(min=2,max=2) List<@NotNull UUID> acceptedDocumentUuids) {
         @Override public String toString() { return "RegisterRequest[REDACTED]"; }
@@ -43,12 +43,14 @@ public class IdentityController {
         @Override public String toString() { return "LoginRequest[REDACTED]"; }
     }
     public record CsrfResponse(String headerName, String token) {}
+    private final com.kampive.api.module.identity.application.port.in.SessionValidity validity;
     private final IdentityUseCases identity;
     private final AuthRateLimiter limiter;
     private final SecurityContextRepository contexts;
     private final SessionAuthenticationStrategy sessions;
     public IdentityController(IdentityUseCases identity, AuthRateLimiter limiter,
-            SecurityContextRepository contexts, SessionAuthenticationStrategy sessions) {
+            SecurityContextRepository contexts, SessionAuthenticationStrategy sessions, com.kampive.api.module.identity.application.port.in.SessionValidity validity) {
+        this.validity=validity;
         this.identity=identity; this.limiter=limiter; this.contexts=contexts; this.sessions=sessions;
     }
     @GetMapping("/csrf")
@@ -76,6 +78,7 @@ public class IdentityController {
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequest body,
             HttpServletRequest request,HttpServletResponse response) {
         if (!limiter.allow(request.getRemoteAddr())) return limited();
+        var started=validity.started();
         UserView user=identity.authenticate(body.email(),body.password());
         var authentication=UsernamePasswordAuthenticationToken.authenticated(user.uuid().toString(),null,
             List.of(new SimpleGrantedAuthority("ROLE_USER")));
@@ -84,6 +87,7 @@ public class IdentityController {
         context.setAuthentication(authentication);
         SecurityContextHolder.setContext(context);
         contexts.saveContext(context,request,response);
+        request.getSession().setAttribute(com.kampive.api.configuration.security.PasswordSessionFilter.STAMP,started);
         return ResponseEntity.ok(user);
     }
     @Parameter(name="X-CSRF-TOKEN", in=ParameterIn.HEADER, required=true,

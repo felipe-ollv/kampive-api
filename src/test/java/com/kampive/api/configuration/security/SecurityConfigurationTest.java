@@ -21,6 +21,10 @@ class SecurityConfigurationTest {
     org.springframework.jdbc.core.simple.JdbcClient jdbc;
     @org.springframework.test.context.bean.override.mockito.MockitoBean
     org.springframework.transaction.PlatformTransactionManager transactions;
+    @org.springframework.test.context.bean.override.mockito.MockitoBean com.kampive.api.module.identity.application.port.in.SessionValidity sessionValidity;
+    @org.junit.jupiter.api.BeforeEach void validTestSessions() {
+        org.mockito.Mockito.when(sessionValidity.valid(org.mockito.ArgumentMatchers.any(),org.mockito.ArgumentMatchers.any())).thenReturn(true);
+    }
     @Autowired MockMvc mvc;
     @Autowired ApplicationContext context;
 
@@ -49,16 +53,16 @@ class SecurityConfigurationTest {
 
     @Test
     void evenAuthenticatedUsersCannotAccessUnimplementedRoutes() throws Exception {
-        mvc.perform(get("/api/campsites").with(user("test")))
+        mvc.perform(get("/api/campsites").with(user("00000000-0000-0000-0000-000000000001")))
             .andExpect(status().isForbidden());
     }
 
     @Test
     void csrfRemainsEnabledIncludingOnHealth() throws Exception {
-        mvc.perform(post("/actuator/health").with(user("test")))
+        mvc.perform(post("/actuator/health").with(user("00000000-0000-0000-0000-000000000001")))
             .andExpect(status().isForbidden())
             .andExpect(jsonPath("$.status").value(403));
-        mvc.perform(post("/api/campsites").with(user("test")).with(csrf()))
+        mvc.perform(post("/api/campsites").with(user("00000000-0000-0000-0000-000000000001")).with(csrf()))
             .andExpect(status().isForbidden());
     }
 

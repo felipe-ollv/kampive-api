@@ -75,3 +75,31 @@ Veja [fluxo de autenticação, contratos e testes](docs/authentication.md).
 Veja [contratos e filtros do catálogo geográfico](docs/geography.md).
 
 O Compose usa HTTPS via Caddy. Siga o README da infra para exportar a CA pública e confiar nela no simulador.
+
+## Campings: indicação e propriedade
+
+O catálogo permite campings sem proprietário vinculado. Usuários enviam indicações; a equipe cadastra e valida os dados. Reivindicações de propriedade só liberam gestão depois de revisão administrativa.
+
+Antes de executar esta versão, aplicar manualmente `docs/sql/campsite-community.sql` e depois `docs/sql/campsite-registration.sql` após o schema base da infra. Não há execução automática de DDL. Vínculos antigos precisam de revisão; `uuid_owner` sozinho não concede acesso.
+
+Consulte [contratos, preparação do banco e procedimentos de revisão](docs/campsite-community.md).
+
+O catálogo público, filtros, paginação, fotos HTTPS e a gestão de rascunhos por proprietários aprovados permanecem disponíveis. Criação direta por usuários foi substituída por `POST /api/v1/campsite-suggestions`; solicitações de propriedade usam `POST /api/v1/campsites/{uuid}/claims`.
+
+## Dados da comunidade
+
+Favoritos, caixa de notificações e avaliações agora usam o banco e a sessão da conta. Consulte [contratos e testes Docker](docs/community-data.md). Não há dados de demonstração nem DDL adicional para esses três módulos.
+
+## Acompanhamento de solicitações
+
+Lista e detalhes privados de indicações e pedidos de propriedade, com respostas públicas e notificações transacionais da moderação. Aplicar `docs/sql/request-tracking.sql` antes de atualizar a API. Consulte [contratos e procedimento administrativo](docs/request-tracking.md).
+
+## Templates de e-mail
+
+Recuperação e confirmação de alteração de senha têm HTML responsivo e texto simples, com versões no banco. Aplicar `docs/sql/email-templates.sql` como administrador. Consulte [variáveis, publicação e limitações](emails/README.md). A porta interna `EmailTemplates` renderiza o conteúdo; o provedor e o fluxo de envio ainda serão integrados.
+
+## Recuperação de senha
+
+Endpoints, tokens de uso único, fila transacional e invalidação de sessões implementados. Aplicar `docs/sql/password-recovery.sql`. O adapter de provedor permanece indisponível até a escolha do serviço. Veja [fluxo, configuração e testes](docs/password-recovery.md).
+
+A confirmação de e-mail, seus endpoints e a transição de contas existentes estão documentados em [docs/email-verification.md](docs/email-verification.md).

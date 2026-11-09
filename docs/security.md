@@ -34,7 +34,7 @@ e testar autenticação/autorização reais. Esta entrega não realiza deploy p�
 
 Argon2id com 19 MiB, duas iterações e paralelismo 1, conforme
 [OWASP Password Storage](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html).
-Senhas de 15 a 128 caracteres, sem truncamento ou regras arbitrárias de composição.
+Senhas de 8 a 128 caracteres, com pelo menos uma letra maiúscula (A–Z) e um número (0–9), sem truncamento.
 O login de conta inexistente também calcula um hash para reduzir diferença de tempo.
 Sessão HttpOnly/SameSite=Lax, Secure por padrão (HTTP permitido apenas no perfil local),
 30 minutos de inatividade; login troca o identificador e o token CSRF, logout invalida a sessão.

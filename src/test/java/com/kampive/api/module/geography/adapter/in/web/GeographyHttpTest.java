@@ -23,6 +23,15 @@ import static org.mockito.Mockito.*;
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 class GeographyHttpTest {
+    @MockitoBean com.kampive.api.module.identity.application.port.in.EmailVerification verification;
+    @org.junit.jupiter.api.BeforeEach void verifiedContributions() {
+        org.mockito.Mockito.when(verification.status(org.mockito.ArgumentMatchers.any())).thenReturn(new com.kampive.api.module.identity.application.port.in.EmailVerification.Status(true,true,null,true));
+    }
+    @MockitoBean com.kampive.api.module.identity.application.port.in.SessionValidity sessionValidity;
+    @org.junit.jupiter.api.BeforeEach void validTestSessions() {
+        org.mockito.Mockito.when(sessionValidity.valid(org.mockito.ArgumentMatchers.any(),org.mockito.ArgumentMatchers.any())).thenReturn(true);
+        org.mockito.Mockito.when(sessionValidity.started()).thenReturn(java.time.Instant.now());
+    }
     @Autowired MockMvc mvc;
     @MockitoBean JdbcClient jdbc;
     @MockitoBean PlatformTransactionManager transactions;
@@ -41,7 +50,8 @@ class GeographyHttpTest {
             .andExpect(jsonPath("$.items[0].id").doesNotExist());
         when(catalog.country(country)).thenReturn(view);
         mvc.perform(get("/api/v1/countries/"+country)).andExpect(status().isOk())
-            .andExpect(jsonPath("$.isoCode").value("BR"));
+            .andExpect(jsonPath("$.isoCode").value("BR"))
+            .andExpect(jsonPath("$.currencyCode").value("BRL"));
     }
     @Test void malformedIdentifiersAndPaginationReturn400() throws Exception {
         for (String query : new String[]{"page=-1","page=10001","size=0","size=101","page=abc","continentUuid=abc"}) {
@@ -56,9 +66,9 @@ class GeographyHttpTest {
         when(catalog.country(country)).thenThrow(new GeographyFailure(GeographyFailure.Reason.COUNTRY_NOT_FOUND));
         mvc.perform(get("/api/v1/countries/"+country)).andExpect(status().isNotFound())
             .andExpect(jsonPath("$.detail").value("Country not found."));
-        mvc.perform(post("/api/v1/countries").with(user("test")).with(csrf()))
+        mvc.perform(post("/api/v1/countries").with(user("00000000-0000-0000-0000-000000000001")).with(csrf()))
             .andExpect(status().isForbidden());
-        mvc.perform(delete("/api/v1/countries/"+country).with(user("test")).with(csrf()))
+        mvc.perform(delete("/api/v1/countries/"+country).with(user("00000000-0000-0000-0000-000000000001")).with(csrf()))
             .andExpect(status().isForbidden());
         mvc.perform(get("/api/v1/users/me")).andExpect(status().isUnauthorized());
     }

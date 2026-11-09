@@ -1,0 +1,11 @@
+Olá, {{first_name}}!
+
+Falta confirmar seu e-mail para avaliar, indicar e reivindicar campings no Kampive.
+
+Confirmar meu e-mail: {{verify_url}}
+Este link é válido por 24 horas.
+
+Não criou uma conta no Kampive? Pode ignorar este e-mail.
+
+Contato de suporte: {{support_url}}
+Kampive — Explore a vida ao ar livre

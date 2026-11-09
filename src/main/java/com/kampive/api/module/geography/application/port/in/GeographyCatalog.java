@@ -7,7 +7,23 @@ import com.kampive.api.module.geography.domain.GeographyFailure;
 public interface GeographyCatalog {
     record Continent(UUID uuid, String name) {}
     record Country(UUID uuid, String name, String isoCode, String imageUrl,
-                   UUID continentUuid, String continentName, long campsiteCount) {}
+                   UUID continentUuid, String continentName, long campsiteCount, String currencyCode) {
+        public Country(UUID uuid, String name, String isoCode, String imageUrl,
+                       UUID continentUuid, String continentName, long campsiteCount) {
+            this(uuid, name, isoCode, imageUrl, continentUuid, continentName, campsiteCount,
+                currencyFor(isoCode));
+        }
+        private static String currencyFor(String isoCode) {
+            if (isoCode == null) return null;
+            try {
+                var currency = java.util.Currency.getInstance(
+                    new java.util.Locale.Builder().setRegion(isoCode).build());
+                return currency == null ? null : currency.getCurrencyCode();
+            } catch (IllegalArgumentException ex) {
+                return null;
+            }
+        }
+    }
     record CountryQuery(UUID continentUuid, String query, int page, int size) {
         public CountryQuery {
             if (page < 0 || page > 10000 || size < 1 || size > 100 || (query != null && query.length() > 120)) {

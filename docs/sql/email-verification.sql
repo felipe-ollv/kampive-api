@@ -1,0 +1,97 @@
+-- Apply after email-templates.sql and password-recovery.sql, before deploying the API.
+BEGIN;
+ALTER TABLE kampive.app_user ADD COLUMN email_verification_required_at TIMESTAMPTZ;
+UPDATE kampive.app_user SET email_verification_required_at=clock_timestamp()+interval '7 days';
+ALTER TABLE kampive.app_user ALTER COLUMN email_verification_required_at SET DEFAULT CURRENT_TIMESTAMP;
+ALTER TABLE kampive.app_user ALTER COLUMN email_verification_required_at SET NOT NULL;
+CREATE TABLE kampive.email_verification (
+ id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+ uuid_email_verification UUID NOT NULL DEFAULT gen_random_uuid() UNIQUE,
+ uuid_app_user UUID NOT NULL REFERENCES kampive.app_user(uuid_app_user),
+ email_snapshot VARCHAR(254) NOT NULL,
+ token_hash CHAR(64) UNIQUE,
+ expires_at TIMESTAMPTZ,
+ consumed_at TIMESTAMPTZ,
+ created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ available_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ sent_at TIMESTAMPTZ,
+ attempts INTEGER NOT NULL DEFAULT 0,
+ failed BOOLEAN NOT NULL DEFAULT false
+);
+CREATE INDEX ix_email_verification_user ON kampive.email_verification(uuid_app_user,created_at DESC);
+CREATE INDEX ix_email_verification_pending ON kampive.email_verification(available_at) WHERE sent_at IS NULL AND consumed_at IS NULL AND NOT failed;
+REVOKE ALL ON kampive.email_verification FROM PUBLIC;
+GRANT SELECT,INSERT,UPDATE,DELETE ON kampive.email_verification TO kampive_app;
+GRANT USAGE,SELECT ON SEQUENCE kampive.email_verification_id_seq TO kampive_app;
+ALTER TABLE kampive.email_template DROP CONSTRAINT email_template_code_check;
+ALTER TABLE kampive.email_template ADD CONSTRAINT email_template_code_check CHECK(code IN ('password-reset','password-changed','email-verification'));
+INSERT INTO kampive.email_template(code,locale,version,active,subject,html_body,text_body) VALUES
+('email-verification','pt-BR',1,true,'Confirme seu e-mail no Kampive',$html$<!doctype html>
+<html lang="pt-BR" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="x-apple-disable-message-reformatting">
+<title>Confirme seu e-mail no Kampive</title>
+<!--[if mso]><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml><![endif]-->
+<style>
+body, table, td, a { -webkit-text-size-adjust:100%; -ms-text-size-adjust:100%; }
+table, td { mso-table-lspace:0pt; mso-table-rspace:0pt; }
+img { border:0; outline:none; text-decoration:none; -ms-interpolation-mode:bicubic; }
+@media screen and (max-width:600px) {
+  .outer { padding:16px 8px !important; }
+  .content { padding:28px 20px !important; }
+  .heading { font-size:28px !important; line-height:34px !important; }
+}
+</style>
+</head>
+<body style="margin:0;padding:0;width:100%;background-color:#fbf9f4;color:#1b1c19;font-family:Arial,Helvetica,sans-serif;">
+<div style="display:none;font-size:1px;line-height:1px;color:#fbf9f4;max-height:0;max-width:0;opacity:0;overflow:hidden;mso-hide:all;">Confirme seu e-mail para participar da comunidade.</div>
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;background-color:#fbf9f4;">
+<tr><td class="outer" align="center" style="padding:32px 12px;">
+<!--[if mso]><table role="presentation" width="560" align="center" cellpadding="0" cellspacing="0" border="0"><tr><td><![endif]-->
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;max-width:560px;background-color:#ffffff;border:1px solid #e4e2dd;border-radius:12px;">
+<tr><td class="content" style="padding:40px 32px;">
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;table-layout:fixed;">
+<tr><td align="center" style="padding-bottom:36px;"><img src="{{logo_url}}" alt="Kampive" width="120" style="display:block;width:120px;max-width:100%;height:auto;color:#1e3a2f;font-size:24px;font-weight:bold;"></td></tr>
+<tr><td><h1 class="heading" style="margin:0 0 24px;font-size:32px;line-height:38px;color:#1e3a2f;">Confirme seu e-mail</h1></td></tr>
+<tr><td style="font-size:16px;line-height:25px;word-wrap:break-word;overflow-wrap:anywhere;">
+<p style="margin:0 0 16px;">Olá, {{first_name}}!</p>
+<p style="margin:0 0 24px;">Falta confirmar seu e-mail para avaliar, indicar e reivindicar campings no Kampive.</p>
+</td></tr>
+<tr><td style="padding-bottom:12px;">
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"><tr><td align="center" bgcolor="#c04e18" style="border-radius:8px;mso-padding-alt:16px 20px;">
+<a href="{{verify_url}}" style="display:block;padding:16px 20px;border:1px solid #c04e18;border-radius:8px;color:#ffffff;font-size:17px;line-height:24px;font-weight:bold;text-align:center;text-decoration:none;mso-padding-alt:0;">Confirmar meu e-mail</a>
+</td></tr></table></td></tr>
+<tr><td align="center" style="padding-bottom:28px;color:#727974;font-size:13px;line-height:20px;">Este link é válido por 24 horas.</td></tr>
+<tr><td style="padding-bottom:28px;font-size:14px;line-height:22px;word-break:break-all;overflow-wrap:anywhere;">
+<p style="margin:0 0 8px;word-break:normal;">Se o botão não funcionar, copie e cole este link no navegador:</p>
+<a href="{{verify_url}}" style="color:#1e3a2f;text-decoration:underline;word-break:break-all;overflow-wrap:anywhere;">{{verify_url}}</a>
+</td></tr>
+<tr><td style="padding:24px 0;border-top:1px solid #e4e2dd;font-size:14px;line-height:23px;">
+<strong style="color:#1e3a2f;">Não criou uma conta no Kampive?</strong>
+<p style="margin:8px 0 0;">Pode ignorar este e-mail. Nenhuma confirmação será feita sem sua ação.</p>
+</td></tr>
+<tr><td align="center" style="padding-top:24px;border-top:1px solid #e4e2dd;font-size:13px;line-height:21px;color:#727974;">
+<strong style="font-size:16px;color:#1e3a2f;">Kampive</strong><br>Explore a vida ao ar livre<br>
+<a href="{{support_url}}" style="color:#1e3a2f;text-decoration:underline;">Contato de suporte</a>
+</td></tr>
+</table>
+</td></tr></table>
+<!--[if mso]></td></tr></table><![endif]-->
+</td></tr></table>
+</body>
+</html>
+$html$,$text$Olá, {{first_name}}!
+
+Falta confirmar seu e-mail para avaliar, indicar e reivindicar campings no Kampive.
+
+Confirmar meu e-mail: {{verify_url}}
+Este link é válido por 24 horas.
+
+Não criou uma conta no Kampive? Pode ignorar este e-mail.
+
+Contato de suporte: {{support_url}}
+Kampive — Explore a vida ao ar livre
+$text$);
+COMMIT;

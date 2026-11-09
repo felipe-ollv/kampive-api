@@ -30,7 +30,7 @@ class ArchitectureTest {
     @Test
     void modulesMayOnlyConsumeOtherModulesThroughInputContracts() {
         String[] modules = {"identity", "user", "geography", "campsite",
-            "review", "favorite", "notification"};
+            "review", "favorite", "notification", "administration"};
         for (String source : modules) {
             for (String target : modules) {
                 if (source.equals(target)) continue;

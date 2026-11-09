@@ -14,7 +14,7 @@ public class OpenApiConfiguration {
     OpenAPI kampiveOpenApi() {
         return new OpenAPI()
             .info(new Info().title("Kampive API").version("0.0.1")
-                .description("Kampive API: session authentication and user profiles."))
+                .description("Kampive API: session authentication, user profiles, geography and campsites."))
             .components(new Components().addSecuritySchemes("sessionCookie",new SecurityScheme()
                 .type(SecurityScheme.Type.APIKEY).in(SecurityScheme.In.COOKIE).name("JSESSIONID")))
             .addServersItem(new Server().url("/").description("Current server"));

@@ -17,7 +17,7 @@ schemas, corpos e o parâmetro `X-CSRF-TOKEN` dos POSTs.
 1. Execute GET /auth/csrf e preserve o cookie JSESSIONID. Copie o token retornado.
 2. Consulte /auth/legal-documents. O cadastro exige os dois UUIDs atuais em
    acceptedDocumentUuids; se não houver os dois documentos publicados, será recusado.
-3. Cadastre nome (3–150), email (até 254) e senha (15–128 caracteres). countryUuid
+3. Cadastre nome (3–150), email (até 254) e senha (8–128 caracteres, uma maiúscula A–Z e um número 0–9). countryUuid
    e adventurerStyleUuid são opcionais, mas precisam existir quando informados.
    Envie o token no header X-CSRF-TOKEN e preserve o cookie em todos os pedidos.
 4. Faça login com e-mail e senha. Cadastro não autentica automaticamente.
@@ -49,7 +49,7 @@ protegidas deverão validar o estado e a autorização sobre cada recurso.
 Erros: 400 validação/aceites, 401 credenciais/sessão, 403 CSRF/acesso,
 409 conflito de cadastro, 429 limite de tentativas e 500 genérico inesperado.
 Senhas, hashes e detalhes de SQL não são retornados. A política de senha do app
-atual ainda precisa ser alinhada aos 15 caracteres ao conectar o frontend.
+atual valida a senha e exige um campo de confirmação igual à senha.
 
 ## Validação
 

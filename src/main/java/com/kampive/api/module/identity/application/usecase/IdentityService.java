@@ -20,7 +20,9 @@ public final class IdentityService implements IdentityUseCases {
     }
     public UserView register(Registration c) {
         if (c.name()==null || c.name().strip().length()<3 || c.name().strip().length()>150
-                || c.password()==null || c.password().length()<15 || c.password().length()>128) {
+                || c.password()==null || c.password().length()<8 || c.password().length()>128
+                || !c.password().chars().anyMatch(ch -> ch>='A' && ch<='Z')
+                || !c.password().chars().anyMatch(ch -> ch>='0' && ch<='9')) {
             throw new IdentityFailure(INVALID_INPUT);
         }
         String email=normalizeEmail(c.email());

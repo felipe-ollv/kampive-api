@@ -25,6 +25,15 @@ import static org.assertj.core.api.Assertions.*;
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 class IdentityHttpTest {
+    @MockitoBean com.kampive.api.module.identity.application.port.in.EmailVerification verification;
+    @org.junit.jupiter.api.BeforeEach void verifiedContributions() {
+        org.mockito.Mockito.when(verification.status(org.mockito.ArgumentMatchers.any())).thenReturn(new com.kampive.api.module.identity.application.port.in.EmailVerification.Status(true,true,null,true));
+    }
+    @MockitoBean com.kampive.api.module.identity.application.port.in.SessionValidity sessionValidity;
+    @org.junit.jupiter.api.BeforeEach void validTestSessions() {
+        org.mockito.Mockito.when(sessionValidity.valid(org.mockito.ArgumentMatchers.any(),org.mockito.ArgumentMatchers.any())).thenReturn(true);
+        org.mockito.Mockito.when(sessionValidity.started()).thenReturn(java.time.Instant.now());
+    }
     @Autowired MockMvc mvc;
     @MockitoBean JdbcClient jdbc;
     @MockitoBean PlatformTransactionManager transactions;
@@ -84,7 +93,7 @@ class IdentityHttpTest {
         when(limiter.allow(anyString())).thenReturn(true);
         when(identity.register(any())).thenReturn(profile);
         String body="""
-            {"name":"Explorer","email":"user@example.test","password":"a long password phrase",
+            {"name":"Explorer","email":"user@example.test","password":"Senha123",
              "acceptedDocumentUuids":["%s","%s"]}
             """.formatted(UUID.randomUUID(),UUID.randomUUID());
         var session=new MockHttpSession();

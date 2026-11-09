@@ -27,19 +27,22 @@ class IdentityServiceTest {
         return new Registration(" Explorer ","USER@example.test",password,null,null,documents);
     }
     @Test void normalizesEmailAndStoresOnlyHash() {
-        when(passwords.hash("a long password phrase")).thenReturn("encoded");
+        when(passwords.hash("Senha123")).thenReturn("encoded");
         when(users.create("Explorer","user@example.test",null,null)).thenReturn(user);
-        assertThat(service.register(registration("a long password phrase",List.of(terms,privacy)))).isEqualTo(user);
+        assertThat(service.register(registration("Senha123",List.of(terms,privacy)))).isEqualTo(user);
         verify(credentials).save(uuid,"encoded",List.of(terms,privacy));
     }
     @Test void rejectsWeakPasswordsAndStaleOrMissingConsentsBeforeWriting() {
         for (Registration c : List.of(registration("short",List.of(terms,privacy)),
-                registration("a long password phrase",List.of(terms,terms)),
-                registration("a long password phrase",List.of(terms,UUID.randomUUID())))) {
+                registration("Senha12",List.of(terms,privacy)),
+                registration("senha123",List.of(terms,privacy)),
+                registration("Senhasemnumero",List.of(terms,privacy)),
+                registration("Senha123",List.of(terms,terms)),
+                registration("Senha123",List.of(terms,UUID.randomUUID())))) {
             assertThatThrownBy(() -> service.register(c)).isInstanceOf(IdentityFailure.class);
         }
         when(credentials.currentDocuments()).thenReturn(List.of());
-        assertThatThrownBy(() -> service.register(registration("a long password phrase",List.of(terms,privacy))))
+        assertThatThrownBy(() -> service.register(registration("Senha123",List.of(terms,privacy))))
             .isInstanceOf(IdentityFailure.class);
         verifyNoInteractions(users,passwords);
     }

@@ -29,20 +29,53 @@ public class SecurityConfiguration {
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http,
             @Value("${app.documentation.enabled:false}") boolean documentationEnabled,
-            SecurityContextRepository contexts, CsrfTokenRepository csrf) throws Exception {
+            SecurityContextRepository contexts, CsrfTokenRepository csrf, com.kampive.api.module.identity.application.port.in.SessionValidity validity, com.kampive.api.module.identity.application.port.in.EmailVerification verification, com.kampive.api.module.user.application.port.in.Administrators administrators) throws Exception {
         return http
+            .addFilterAfter(new PasswordSessionFilter(validity), org.springframework.security.web.context.SecurityContextHolderFilter.class)
+            .addFilterAfter(new EmailVerificationFilter(verification), org.springframework.security.web.access.intercept.AuthorizationFilter.class)
             .authorizeHttpRequests(auth -> {
                 auth.requestMatchers(HttpMethod.GET, "/actuator/health").permitAll();
+                var adminAccess = (org.springframework.security.authorization.AuthorizationManager<org.springframework.security.web.access.intercept.RequestAuthorizationContext>) (authentication, context) -> {
+                    var actor = authentication.get(); boolean allowed = false;
+                    if (actor != null && actor.isAuthenticated()) {
+                        try { allowed = administrators.active(java.util.UUID.fromString(actor.getName())); }
+                        catch (IllegalArgumentException invalidIdentity) { /* deny */ }
+                    }
+                    return new org.springframework.security.authorization.AuthorizationDecision(allowed);
+                };
+                auth.requestMatchers(HttpMethod.GET,"/api/v1/admin/me","/api/v1/admin/requests","/api/v1/admin/campings","/api/v1/admin/reviews","/api/v1/admin/users","/api/v1/admin/history").access(adminAccess);
+                auth.requestMatchers(HttpMethod.POST,"/api/v1/admin/photos","/api/v1/admin/requests/{kind}/{id}/decision","/api/v1/admin/campings","/api/v1/admin/campings/{id}/status","/api/v1/admin/reviews/{id}/status").access(adminAccess);
+                auth.requestMatchers(HttpMethod.PUT,"/api/v1/admin/campings/{id}").access(adminAccess);
                 if (documentationEnabled) {
                     auth.requestMatchers(HttpMethod.GET, "/v3/api-docs", "/v3/api-docs.yaml",
                         "/v3/api-docs/swagger-config", "/swagger-ui.html", "/swagger-ui/**").permitAll();
                 }
                 auth.requestMatchers(HttpMethod.GET,"/api/v1/auth/csrf","/api/v1/auth/legal-documents").permitAll();
-                auth.requestMatchers(HttpMethod.POST,"/api/v1/auth/register","/api/v1/auth/login").permitAll();
+                auth.requestMatchers(HttpMethod.POST,"/api/v1/auth/register","/api/v1/auth/login","/api/v1/auth/password-recovery","/api/v1/auth/password-reset").permitAll();
+                auth.requestMatchers(HttpMethod.POST,"/api/v1/auth/email-verification/confirm").permitAll();
+                auth.requestMatchers(HttpMethod.GET,"/api/v1/auth/email-verification").authenticated();
+                auth.requestMatchers(HttpMethod.POST,"/api/v1/auth/email-verification/resend").authenticated();
                 auth.requestMatchers(HttpMethod.POST,"/api/v1/auth/logout").authenticated();
                 auth.requestMatchers(HttpMethod.GET,"/api/v1/users/me").authenticated();
+                auth.requestMatchers(HttpMethod.GET,"/api/v1/users/me/reviews/{uuid}").authenticated();
+                auth.requestMatchers(HttpMethod.PUT,"/api/v1/users/me/reviews/{uuid}").authenticated();
+                auth.requestMatchers(HttpMethod.DELETE,"/api/v1/users/me/reviews/{uuid}").authenticated();
+                auth.requestMatchers(HttpMethod.GET,"/api/v1/users/me/requests","/api/v1/users/me/requests/{type}/{uuid}").authenticated();
+                auth.requestMatchers(HttpMethod.PUT,"/api/v1/users/me").authenticated();
+                auth.requestMatchers(HttpMethod.DELETE,"/api/v1/users/me").authenticated();
                 auth.requestMatchers(HttpMethod.GET,"/api/v1/continents","/api/v1/countries",
                     "/api/v1/countries/{countryUuid}").permitAll();
+                auth.requestMatchers(HttpMethod.GET,"/api/v1/campsites","/api/v1/campsites/{uuid}",
+                    "/api/v1/campsite-options","/api/v1/cities","/api/v1/campsite-photos/{filename}").permitAll();
+                auth.requestMatchers(HttpMethod.GET,"/api/v1/users/me/campsites","/api/v1/users/me/campsites/{uuid}").authenticated();
+                auth.requestMatchers(HttpMethod.POST,"/api/v1/campsite-registrations","/api/v1/campsite-suggestions","/api/v1/campsites/{uuid}/claims","/api/v1/campsites/{uuid}/submit",
+                    "/api/v1/campsites/{uuid}/archive").authenticated();
+                auth.requestMatchers(HttpMethod.PUT,"/api/v1/campsites/{uuid}").authenticated();
+                auth.requestMatchers(HttpMethod.GET,"/api/v1/review-options","/api/v1/campsites/{uuid}/reviews").permitAll();
+                auth.requestMatchers(HttpMethod.GET,"/api/v1/users/me/favorites","/api/v1/users/me/notifications","/api/v1/users/me/reviews").authenticated();
+                auth.requestMatchers(HttpMethod.PUT,"/api/v1/users/me/favorites/{uuid}","/api/v1/users/me/notifications/{uuid}").authenticated();
+                auth.requestMatchers(HttpMethod.DELETE,"/api/v1/users/me/favorites/{uuid}").authenticated();
+                auth.requestMatchers(HttpMethod.POST,"/api/v1/users/me/notifications/read-all","/api/v1/campsites/{uuid}/reviews").authenticated();
                 auth.anyRequest().denyAll();
             })
             .csrf(config -> config.csrfTokenRepository(csrf))

@@ -4,6 +4,7 @@ WORKDIR /workspace
 COPY .mvn/ .mvn/
 COPY mvnw pom.xml ./
 RUN chmod +x mvnw
+COPY emails/ emails/
 COPY src/ src/
 RUN --mount=type=cache,target=/root/.m2 ./mvnw -B -ntp verify
 
@@ -11,6 +12,7 @@ FROM eclipse-temurin:21-jre-jammy@sha256:f04fb34e053148344e83317976114ec3f37e4b8
 WORKDIR /app
 RUN groupadd --gid 10001 kampive && useradd --uid 10001 --gid kampive --no-create-home kampive
 COPY --from=build --chown=10001:10001 /workspace/target/kampive-api-*.jar /app/app.jar
+RUN mkdir -p /app/uploads && chown 10001:10001 /app/uploads
 USER 10001:10001
 EXPOSE 8080
 ENTRYPOINT ["java", "-jar", "/app/app.jar"]

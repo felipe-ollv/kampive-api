@@ -23,7 +23,10 @@ spring:
       enabled: true
   servlet:
     multipart:
-      enabled: false
+      enabled: true
+      max-file-size: 10MB
+      max-request-size: 92MB
+      file-size-threshold: 0
 server:
   port: 8080
   servlet:
@@ -49,6 +52,19 @@ management:
       show-components: never
 
 app:
+  verification:
+    confirm-url: ${EMAIL_VERIFICATION_URL:}
+  email:
+    brevo:
+      api-key: ${BREVO_API_KEY:}
+    sender-email: ${EMAIL_SENDER_ADDRESS:contact@kampive.app}
+    sender-name: ${EMAIL_SENDER_NAME:Kampive}
+  recovery:
+    reset-url: ${RECOVERY_RESET_URL:}
+    logo-url: ${EMAIL_LOGO_URL:}
+    support-url: ${EMAIL_SUPPORT_URL:}
+    token-key: ${RECOVERY_TOKEN_KEY:}
+    poll-ms: 5000
   documentation:
     enabled: false
 springdoc:

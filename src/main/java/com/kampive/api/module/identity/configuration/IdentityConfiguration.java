@@ -18,12 +18,12 @@ import com.kampive.api.module.user.application.port.in.UserAccounts.UserView;
 public class IdentityConfiguration {
     @Bean
     IdentityUseCases identityUseCases(UserAccounts users, CredentialStore credentials,
-            PasswordHasher passwords, PlatformTransactionManager manager) {
+            PasswordHasher passwords, PlatformTransactionManager manager, com.kampive.api.module.identity.application.port.in.EmailVerification verification) {
         var core=new IdentityService(users,credentials,passwords);
         var transaction=new TransactionTemplate(manager);
         return new IdentityUseCases() {
             public UserView register(Registration command) {
-                try { return transaction.execute(status -> core.register(command)); }
+                try { return transaction.execute(status -> { var user=core.register(command); verification.registered(user.uuid()); return user; }); }
                 catch (DataIntegrityViolationException exception) {
                     throw new IdentityFailure(IdentityFailure.Reason.REGISTRATION_CONFLICT);
                 }
